@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+              Create required secrets in Secrets Manager for cms simplification project.
+Parameters:
+  ApplicationName:
+    Description: Application Name
+    Type: String
+    Default: spares
+  BoxRawGlueJobName:
+    Type: String
+    Description: Name of the Box raw layer ingestion job.
+Resources:
+ BoxRawJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${OrganizationName}-${ApplicationName}-${BoxRawGlueJobName}-${Env}"
+      Role: !FindInMap [EnvironmentMap, !Ref Env, glueIAM]
+      GlueVersion: 3.0
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      MaxRetries: 0
+      Timeout: 150
+      ExecutionProperty:
+        MaxConcurrentRuns: 20
+      Connections:
+        Connections:
+          - !Sub "${OrganizationName}-${ApplicationName}-network-${Env}"
+      Description: This job loads from Box to S3 raw layer.
+      Command:
+        Name: glueetl
+        PythonVersion: 3
+        ScriptLocation: !Sub "s3://${OrganizationName}-${ApplicationName}-cicd-${Env}/${OrganizationName}-${ApplicationName}-${OMGitRepo}/${Env}/artifacts/functions/${BoxRawGlueJobName}.py"
+      DefaultArguments:
+        '--enable-job-insights': true
+        '--job-bookmark-option': job-bookmark-disable
+        '--enable-metrics': true
+        '--enable-continuous-cloudwatch-log': true
+        '--enable-spark-ui': true
+        '--spark-event-logs-path': !Sub "s3://${OrganizationName}-${ApplicationName}-lz-${Env}/${GlueLogs}/box_raw/"
+        '--TempDir': !FindInMap [EnvironmentMap, !Ref Env, tempDirectory]
+        '--enable-glue-datacatalog': true
+        '--extra-py-files': !FindInMap [EnvironmentMap, !Ref Env, extraPythonFiles]
+        '--additional-python-modules': psycopg2-binary,pandas,awswrangler,boxsdk[jwt]
+        '--dynamodb_table': !FindInMap [EnvironmentMap, !Ref Env, dynamoTable]
+        '--email_from': !FindInMap [EnvironmentMap, !Ref Env, emailFrom]
+        '--email_to': !FindInMap [EnvironmentMap, !Ref Env, emailTo]
+        '--s3_bucket': !FindInMap [EnvironmentMap, !Ref Env, s3Bucket]
+        '--secret_box': !Sub "/${OrganizationName}-${ApplicationName}/${Env}/box"
+        '--secret_rds': !FindInMap [EnvironmentMap, !Ref Env, rdsUserSecret]
+        '--smtp_server_ip': !FindInMap [EnvironmentMap, !Ref Env, smtpServerIp]
+        '--job-language': python
+      Tags:
+        "Name": !Sub "${OrganizationName}-${ApplicationName}-${BoxRawGlueJobName}-${Env}"
+        "uai": !Ref UAI
+        "owner": !Sub "${OrganizationName}-${ApplicationName}"
+        "Env": !Sub "${Env}"
