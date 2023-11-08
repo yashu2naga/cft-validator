@@ -2,12 +2,12 @@ import json
 import yaml
  
 # Load JSON file
-json_filename = "example.json"
+json_filename = "resources.json"
 with open(json_filename, "r") as json_file:
     json_data = json.load(json_file)
  
 # Load YAML file
-yaml_filename = "example.yaml"
+yaml_filename = "template.yaml"
 with open(yaml_filename, "r") as yaml_file:
     yaml_data = yaml.safe_load(yaml_file)
  
