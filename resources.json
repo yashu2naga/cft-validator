@@ -1,0 +1,12 @@
+{
+  "Parameters" : {
+	"ApplicationName" : "spares",
+	"BoxRawGlueJobName": "box_raw"
+},
+    "Tags" : {
+    "env" : "np",
+	"uai" : "UAI1005419",
+	"Name" : "cms-spares",
+	"owner" : "cms-spares"
+  }
+}
